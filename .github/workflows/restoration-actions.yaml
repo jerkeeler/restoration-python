@@ -16,3 +16,5 @@ jobs:
           pip install -e .[dev]
       - name: Run linting checks
         run: ./bin/lint.sh
+      - name: Run tests
+        run: pytest tests/
