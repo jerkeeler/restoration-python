@@ -15,7 +15,12 @@ classifiers = [
 ]
 dependencies = ["click>=8.0.0"]
 readme = "README.md"
+
+[project.urls]
 repository = "https://github.com/jerkeeler/restoration"
+homepage = "https://github.com/jerkeeler/restoration"
+issues = "https://github.com/jerkeeler/restoration/issues"
+changelog = "https://github.com/jerkeeler/restoration/blob/master/CHANGELOG.md"
 
 [project.scripts]
 restoration = "restoration.cli:cli"
