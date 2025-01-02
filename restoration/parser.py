@@ -69,8 +69,6 @@ def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> tuple[io.BytesIO, No
     logger.debug(two_letter_code)
     logger.debug(data_len)
     recursive_create_tree(root_node, decompressed_data)
-    print_tree(root_node)
-
     return decompressed_data, root_node
 
 
@@ -149,7 +147,13 @@ def find_two_letter_seq(
     return -1
 
 
-def print_tree(parent_node: Node) -> None:
-    print(parent_node)
-    for child in parent_node.children:
-        print_tree(child)
+def get_nodes(root_node: Node, path: list[str]) -> list[Node]:
+    if not path:
+        return [root_node]
+
+    nodes = []
+    for child in root_node.children:
+        if child.token == path[0]:
+            nodes.extend(get_nodes(child, path[1:]))
+
+    return nodes
