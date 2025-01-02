@@ -79,9 +79,7 @@ def recursive_create_tree(
     """
     Recursively build up the metadata tree using a breadth first search approach.
     """
-    logger.debug(
-        f"Searching for children for {parent_node.token} at: {parent_node.offset}"
-    )
+    logger.debug(f"Searching for children for {parent_node.token} at: {parent_node.offset}")
     decompressed_data.seek(parent_node.offset)
     # Skip the first two bytes, since those are the node token
     position = parent_node.offset + 2
@@ -140,9 +138,7 @@ def find_two_letter_seq(
 
         position += 1
 
-    logger.debug(
-        f"Could not find a two letter sequence starting at {offset=}, {upper_bound=}"
-    )
+    logger.debug(f"Could not find a two letter sequence starting at {offset=}, {upper_bound=}")
     data.seek(offset)
     return -1
 
