@@ -1,7 +1,7 @@
 name: restoration CI
 on: [pull_request]
 jobs:
-  tests:
+  linting_and_tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
