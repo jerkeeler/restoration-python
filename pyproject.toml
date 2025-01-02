@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "restoration"
-version = "0.1.0"
+version = "0.2.0"
 description = "A parser for Age of Mythology .mythrec files"
 authors = [{name = "Jeremy Keeler", email = "jeremy@keeler.dev"}]
 license = {file = "LICENSE"}
