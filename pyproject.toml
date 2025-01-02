@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "restoration"
+version = "0.1.0"
+description = "A parser for Age of Mythology .mythrec files"
+authors = [{name = "Jeremy Keeler", email = "jeremy@keeler.dev"}]
+license = {file = "LICENSE"}
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+dependencies = ["click>=8.0.0"]
+readme = "README.md"
+
+[project.scripts]
+restoration = "restoration.cli:cli"
+
+[project.optional-dependencies]
+dev = [
+  "black>=24.10.0",
+  "isort>=5.13.2",
+  "pre-commit>=4.0.1",
+]
+
+[tool.isort]
+profile = "black"
