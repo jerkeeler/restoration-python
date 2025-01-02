@@ -6,6 +6,8 @@ import zlib
 
 logger = logging.getLogger(__name__)
 
+OUTER_HIERARCHY_START_OFFSET = 255
+
 
 def decompressl33t(stream: io.BufferedReader | gzip.GzipFile) -> io.BytesIO:
     # Read the first 4 bytes of the stream and check if it is l33t encoded
@@ -22,3 +24,5 @@ def decompressl33t(stream: io.BufferedReader | gzip.GzipFile) -> io.BytesIO:
 
 def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> None:
     decompressed_data = decompressl33t(stream)
+    decompressed_data.seek(OUTER_HIERARCHY_START_OFFSET)
+    logger.debug(decompressed_data.read(4).decode("utf-8"))
