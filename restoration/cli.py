@@ -1,23 +1,9 @@
 import gzip
-import io
-import struct
-import typing
-import zlib
+import logging
 
 import click
 
-
-def decompressl33t(stream: typing.BinaryIO) -> typing.BinaryIO:
-    # Read the first 4 bytes of the stream and check if it is l33t encoded
-    header = stream.read(4)
-    if header != b"l33t":
-        raise ValueError("Invalid header. Expecting 'l33t'")
-
-    decompress = zlib.decompressobj()
-    # Read the length of the compressed data, need to read so that the rest can be
-    # decompressed with one read operation
-    struct.unpack("<i", stream.read(4))[0]
-    return io.BytesIO(decompress.decompress(stream.read()))
+from restoration.parser import parse_rec
 
 
 @click.command()
@@ -27,13 +13,23 @@ def decompressl33t(stream: typing.BinaryIO) -> typing.BinaryIO:
     is_flag=True,
     help="Decompress the file using gzip before processing",
 )
-def cli(filepath: str, is_gzip: bool):
-    o = open
+@click.option(
+    "--verbose",
+    is_flag=True,
+    help="Enable verbose logging",
+)
+def cli(filepath: str, is_gzip: bool, verbose: bool) -> None:
+    if verbose:
+        click.echo("Verbose logging enabled")
+    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
+
+    # Ignoring types because we are purposefully overloading this variable to make the code nicer
+    o = open  # type: ignore
     if is_gzip:
-        o = gzip.open
+        o = gzip.open  # type: ignore
     with o(filepath, "rb") as file:
-        data = decompressl33t(file)
-        click.echo("Decompressed!")
+        parse_rec(file)
+    click.echo("Rec parsed!")
 
 
 if __name__ == "__main__":
