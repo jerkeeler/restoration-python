@@ -6,7 +6,9 @@ import struct
 import zlib
 from dataclasses import dataclass, field
 from functools import cached_property
+from typing import Callable
 
+from restoration.enums import KeyType
 from restoration.xceptions import NodeNotFound
 
 logger = logging.getLogger(__name__)
@@ -93,8 +95,8 @@ def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> tuple[io.BytesIO, No
     logger.debug(two_letter_code)
     logger.debug(data_len)
     recursive_create_tree(root_node, decompressed_data)
-    read_build_string(root_node, decompressed_data)
-    parse_profile_keys(root_node, decompressed_data)
+    # read_build_string(root_node, decompressed_data)
+    # parse_profile_keys(root_node, decompressed_data)
     return decompressed_data, root_node
 
 
@@ -175,6 +177,7 @@ def read_string(data: io.BytesIO, offset: int) -> tuple[str, int]:
     For example a string might look like:
     \x02\x00\x00\x00H\x00e\x00l\x00l\x00o\x00
     """
+    logger.debug(f"Reading string at offset={offset}")
     data.seek(offset)
     num_chars = struct.unpack("<H", data.read(2))[0]
     data.read(2)  # Skip 2 null padding bytes
@@ -203,6 +206,41 @@ def read_build_string(root_node: Node, data: io.BytesIO) -> str:
     return s
 
 
+def parse_string(data: io.BytesIO, position: int, keyname: str) -> int:
+    # position += 2  # Skip new line byte from keytype
+    if keyname == "gamemapname":
+        position += 2
+    s, new_position = read_string(data, position)
+    logger.debug(f"{s=}")
+    position = new_position + 2  # Skip 2 null padding bytes
+    if keyname == "gamemapname":
+        position += 2
+    return position
+
+
+def parse_integer(data: io.BytesIO, position: int, keyname: str) -> int:
+    data.seek(position + 2)  # Skip 2 null padding bytes
+    i = struct.unpack("<H", data.read(2))[0]
+    logger.debug(f"{i=}")
+    position = position + 6  # Skip 2 for the int and 2 null padding bytes
+    return position
+
+
+def parse_boolean(data: io.BytesIO, position: int, keyname: str) -> int:
+    data.seek(position)
+    b = struct.unpack("<?", data.read(1))[0]
+    logger.debug(f"{b=}")
+    position = position + 3
+    return position
+
+
+KETYPE_PARSE_MAP: dict[KeyType, Callable[[io.BytesIO, int, str], int]] = {
+    KeyType.string: parse_string,
+    KeyType.integer: parse_integer,
+    KeyType.boolean: parse_boolean,
+}
+
+
 def parse_profile_keys(root_node: Node, data: io.BytesIO) -> None:
     children = root_node.get_children(["MP", "ST"])
     if not children:
@@ -218,25 +256,11 @@ def parse_profile_keys(root_node: Node, data: io.BytesIO) -> None:
     position += 4  # Position + 2 for the num_keys read and skip 2 null padding bytes
     for _ in range(num_keys):
         keyname, new_position = read_string(data, position)
-        keytype = struct.unpack("<H", data.read(2))[0]
+        logger.debug(f"{keyname=}, {new_position=}")
+        keytype = KeyType(struct.unpack("<H", data.read(2))[0])
         logger.debug(f"{keyname=}, {keytype=}, {position=}, {new_position=}")
         position = new_position + 2  # Skip the keytype and 4 null padding bytes
-        if keytype == 10:
-            # 10 is string
-            s, new_pos = read_string(data, position)
-            logger.debug(f"{s=}")
-            position = new_pos + 2  # Skip 2 null padding bytes
-        elif keytype == 2:
-            # 2 is int
-            data.seek(position + 2)  # Skip 2 null padding bytes
-            i = struct.unpack("<H", data.read(2))[0]
-            logger.debug(f"{i=}")
-            position = position + 6  # Skip 2 for the int and 2 null padding bytes
-        elif keytype == 6:
-            # 6 is boolean
-            data.seek(position)
-            b = struct.unpack("<?", data.read(1))[0]
-            logger.debug(f"{b=}")
-            position = position + 3
-        else:
-            raise ValueError(f"Unknown keytype: {keytype}")
+        parse_func = KETYPE_PARSE_MAP.get(keytype)
+        if not parse_func:
+            raise ValueError(f"No parser for keytype: {keytype}")
+        position = parse_func(data, position, keyname)
