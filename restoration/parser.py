@@ -6,7 +6,7 @@ import struct
 import zlib
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Callable
+from typing import Any, Callable
 
 from restoration.enums import KeyType
 from restoration.xceptions import NodeNotFound
@@ -233,10 +233,9 @@ def read_build_string(root_node: Node, data: bytes) -> str:
     return s
 
 
-def parse_string(data: bytes, position: int, keyname: str) -> int:
+def parse_string(data: bytes, position: int, keyname: str) -> tuple[str, int]:
     read_pos = position + 2
-    # There is some off by one (byte?) type error when reading the gamename, which is an empty string. Need to debug
-    # at some point....
+    # There is some off by one (byte?) when r
     if keyname in {"gamename"}:
         read_pos = position
     s, new_position = read_string(data, read_pos)
@@ -244,27 +243,41 @@ def parse_string(data: bytes, position: int, keyname: str) -> int:
     position = new_position
     if keyname in {"gamename"}:
         position = new_position + 2  # Skip 2 null padding bytes
-    return position
+    return s, position
 
 
-def parse_integer(data: bytes, position: int, keyname: str) -> int:
+def parse_integer(data: bytes, position: int, keyname: str) -> tuple[int, int]:
     i = read_int(data, position + 2)  # Skip 2 null padding bytes
     logger.debug(f"{i=}")
-    position = position + 6  # Skip 2 for the int and 2 null padding bytes
-    return position
+    position = position + 6  # Skip 2 for the int and 4 null padding bytes
+    return i, position
 
 
-def parse_boolean(data: bytes, position: int, keyname: str) -> int:
+def parse_int16(data: bytes, position: int, keyname: str) -> tuple[int, int]:
+    i = read_int(data, position + 2)  # Skip 2 null padding bytes
+    logger.debug(f"{i=}")
+    position = position + 4  # Skip 2 for the int and 2 null padding bytes
+    return i, position
+
+
+def parse_boolean(data: bytes, position: int, keyname: str) -> tuple[bool, int]:
     b = read_bool(data, position)
     logger.debug(f"{b=}")
     position = position + 3  # Skip 1 for the bool and 2 null padding bytes
-    return position
+    return b, position
 
 
-KETYPE_PARSE_MAP: dict[KeyType, Callable[[bytes, int, str], int]] = {
+def parse_gamesyncstate(data: bytes, position: int, keyname: str) -> tuple[None, int]:
+    return None, position + 16
+
+
+KETYPE_PARSE_MAP: dict[KeyType, Callable[[bytes, int, str], tuple[Any, int]]] = {
     KeyType.string: parse_string,
-    KeyType.integer: parse_integer,
+    KeyType.uint32: parse_integer,
+    KeyType.int32: parse_integer,
+    KeyType.int16: parse_int16,
     KeyType.boolean: parse_boolean,
+    KeyType.gamesyncstate: parse_gamesyncstate,
 }
 
 
@@ -280,6 +293,7 @@ def parse_profile_keys(root_node: Node, data: bytes) -> None:
     num_keys = read_int(data, position)
     logger.debug(f"{num_keys=}")
     position += 4  # Position + 2 for the num_keys read and skip 2 null padding bytes
+    profile_keys: dict[str, Any] = {}
     for _ in range(num_keys):
         keyname, next_position = read_string(data, position)
         logger.debug(f"{keyname=}, {next_position=}")
@@ -289,4 +303,5 @@ def parse_profile_keys(root_node: Node, data: bytes) -> None:
         parse_func = KETYPE_PARSE_MAP.get(keytype)
         if not parse_func:
             raise ValueError(f"No parser for keytype: {keytype}")
-        position = parse_func(data, position, keyname)
+        keydata, position = parse_func(data, position, keyname)
+        profile_keys[keyname] = keydata
