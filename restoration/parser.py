@@ -234,14 +234,14 @@ def read_build_string(root_node: Node, data: bytes) -> str:
 
 
 def parse_string(data: bytes, position: int, keyname: str) -> int:
-    # position += 2  # Skip new line byte from keytype
-    if keyname == "gamemapname":
-        position += 2
-    s, new_position = read_string(data, position)
-    logger.debug(f"{s=}")
+    read_pos = position
+    if keyname in {"gamemapname", "gamefilename", "gamefilenameext"}:
+        read_pos += 2
+    s, new_position = read_string(data, read_pos)
+    logger.debug(f"{s=}, {read_pos=}, {new_position=}")
     position = new_position + 2  # Skip 2 null padding bytes
-    if keyname == "gamemapname":
-        position += 2
+    if keyname in {"gamemapname", "gamefilename", "gamefilenameext"}:
+        position -= 2
     return position
 
 
