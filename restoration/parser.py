@@ -234,14 +234,16 @@ def read_build_string(root_node: Node, data: bytes) -> str:
 
 
 def parse_string(data: bytes, position: int, keyname: str) -> int:
-    read_pos = position
-    if keyname in {"gamemapname", "gamefilename", "gamefilenameext"}:
-        read_pos += 2
+    read_pos = position + 2
+    # There is some off by one (byte?) type error when reading the gamename, which is an empty string. Need to debug
+    # at some point....
+    if keyname in {"gamename"}:
+        read_pos = position
     s, new_position = read_string(data, read_pos)
     logger.debug(f"{s=}, {read_pos=}, {new_position=}")
-    position = new_position + 2  # Skip 2 null padding bytes
-    if keyname in {"gamemapname", "gamefilename", "gamefilenameext"}:
-        position -= 2
+    position = new_position
+    if keyname in {"gamename"}:
+        position = new_position + 2  # Skip 2 null padding bytes
     return position
 
 
