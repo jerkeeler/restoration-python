@@ -23,12 +23,12 @@ def parse_command_list(data: bytes, header_end_offset: int) -> list:
     last_index = 1
     command_list = []
 
-    # while True:
-    #     if offset == len(data):
-    #         break
-    #     item = parse_item(data, offset)
-    #     last_index += 1
-    #     offset = item.offset_end
+    while True:
+        if offset == len(data):
+            break
+        item = parse_item(data, offset)
+        last_index += 1
+        offset = item.offset_end
 
     return command_list
 
@@ -55,4 +55,47 @@ def parse_footer(data: bytes, offset: int) -> int:
 
 
 def parse_item(data: bytes, offset: int) -> CommandItem:
+    entry_type = read_int(data, offset)
+    offset += 4
+    early_byte = data[offset]
+    offset += 1
+
+    if entry_type & 1 == 0:
+        offset += 4
+    else:
+        offset += 1
+
+    commands: list[CommandItem] = []
+    if entry_type & 96:
+        num_items = 0
+        if entry_type & 32:
+            num_items = data[offset]
+            offset += 1
+        elif entry_type & 64:
+            num_items = read_int(data, offset)
+            offset += 4
+
+        for _ in range(num_items):
+            # Parse commands
+            pass
+
+    selected_units: list = []
+    if entry_type & 128:
+        num_items = data[offset]
+        offset += 1
+        for _ in range(num_items):
+            selected_units.append(read_int(data, offset))
+            offset += 4
+
+    footer_end_offset = parse_footer(data, offset)
+    offset = footer_end_offset
+    entry_index = read_int(offset)
+    offset += 4
+    finalByte = data[offset]
+    offset += 1
+
     return CommandItem(offset_end=offset)
+
+
+def parse_game_command(data, offset) -> None:
+    pass
