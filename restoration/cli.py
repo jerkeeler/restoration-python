@@ -23,9 +23,9 @@ from restoration.parser import parse_rec
 @click.option("-o", "--output", type=click.Path(writable=True), help="Save the output as a json file")
 @click.option("-q", "--quiet", is_flag=True, help="Don't show the output")
 def cli(filepath: str, is_gzip: bool, verbose: bool, output: str, quiet: bool) -> None:
+
     if verbose:
         click.echo("Verbose logging enabled")
-    if verbose:
         logging.basicConfig(level=logging.DEBUG)
 
     # Ignoring types because we are purposefully overloading this variable to make the code nicer
@@ -34,11 +34,12 @@ def cli(filepath: str, is_gzip: bool, verbose: bool, output: str, quiet: bool) -
         o = gzip.open  # type: ignore
     with o(filepath, "rb") as file:
         replay = parse_rec(file)
+
     if not quiet:
         json_str = replay.to_json()
         click.echo(json_str)
+
     if output:
-        replay_dict = replay.to_dict()
         with open(output, "w") as f:
             f.write(replay.to_json())
 
