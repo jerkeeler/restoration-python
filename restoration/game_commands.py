@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass, field
 
 from restoration.consts import FOOTER
-from restoration.utils import read_short, read_uint
+from restoration.utils import read_int32, read_short
 
 logger = logging.getLogger(__name__)
 

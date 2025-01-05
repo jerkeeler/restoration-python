@@ -1,4 +1,4 @@
-from restoration.utils import read_bool, read_short
+from restoration.utils import read_bool, read_short, read_string
 
 
 # Tests for read_int and read_bool
@@ -13,3 +13,11 @@ def test_read_bool():
     assert read_bool(data, 0) is True
     assert read_bool(data, 1) is False
     assert read_bool(data, 2) is True
+
+
+# Tests for read_string
+def test_read_string():
+    data = b"\x05\x00\x00\x00H\x00e\x00l\x00l\x00o\x00"
+    string, next_offset = read_string(data, 0)
+    assert string == "Hello"
+    assert next_offset == 14
