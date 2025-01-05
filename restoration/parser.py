@@ -205,7 +205,6 @@ def read_string(data: bytes, offset: int) -> tuple[str, int]:
 
     Returns the string and the index directly after the string.
     """
-    logger.debug(f"Reading string at offset={offset}")
     num_chars = read_int(data, offset)
     start_of_string = offset + 4  # offset + 2 bytes for int + 2 bytes of padding
     end_of_string = start_of_string + num_chars * 2
@@ -239,35 +238,31 @@ def parse_string(data: bytes, position: int, keyname: str) -> tuple[str, int]:
     if keyname in {"gamename"}:
         read_pos = position
     s, new_position = read_string(data, read_pos)
-    logger.debug(f"{s=}, {read_pos=}, {new_position=}")
     position = new_position
     if keyname in {"gamename"}:
         position = new_position + 2  # Skip 2 null padding bytes
     return s, position
 
 
-def parse_integer(data: bytes, position: int, keyname: str) -> tuple[int, int]:
+def parse_integer(data: bytes, position: int, _: str) -> tuple[int, int]:
     i = read_int(data, position + 2)  # Skip 2 null padding bytes
-    logger.debug(f"{i=}")
     position = position + 6  # Skip 2 for the int and 4 null padding bytes
     return i, position
 
 
-def parse_int16(data: bytes, position: int, keyname: str) -> tuple[int, int]:
+def parse_int16(data: bytes, position: int, _: str) -> tuple[int, int]:
     i = read_int(data, position + 2)  # Skip 2 null padding bytes
-    logger.debug(f"{i=}")
     position = position + 4  # Skip 2 for the int and 2 null padding bytes
     return i, position
 
 
-def parse_boolean(data: bytes, position: int, keyname: str) -> tuple[bool, int]:
+def parse_boolean(data: bytes, position: int, _: str) -> tuple[bool, int]:
     b = read_bool(data, position)
-    logger.debug(f"{b=}")
     position = position + 3  # Skip 1 for the bool and 2 null padding bytes
     return b, position
 
 
-def parse_gamesyncstate(data: bytes, position: int, keyname: str) -> tuple[None, int]:
+def parse_gamesyncstate(_: bytes, position: int, __: str) -> tuple[None, int]:
     return None, position + 10
 
 
@@ -296,7 +291,6 @@ def parse_profile_keys(root_node: Node, data: bytes) -> None:
     profile_keys: dict[str, Any] = {}
     for _ in range(num_keys):
         keyname, next_position = read_string(data, position)
-        logger.debug(f"{keyname=}, {next_position=}")
         keytype = KeyType(read_int(data, next_position))
         logger.debug(f"{keyname=}, {keytype=}, {position=}, {next_position=}")
         position = next_position + 2  # Skip the keytype and 2 null padding bytes
