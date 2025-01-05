@@ -12,7 +12,7 @@ from restoration.consts import (
 )
 from restoration.game_commands import parse_command_list
 from restoration.types import PROFILE_KEY_VALUE_TPYES, KeyType, Node, Replay
-from restoration.utils import read_bool, read_int
+from restoration.utils import read_bool, read_short
 from restoration.xceptions import NodeNotFound
 
 logger = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ def recursive_create_tree(
         position = next_node_loc
         token = decompressed_data[position : position + 2].decode("utf-8")
         position += 2
-        size = read_int(decompressed_data, position)
+        size = read_short(decompressed_data, position)
         position += 2
 
         node = Node(
@@ -157,7 +157,7 @@ def read_string(data: bytes, offset: int) -> tuple[str, int]:
 
     Returns the string and the index directly after the string.
     """
-    num_chars = read_int(data, offset)
+    num_chars = read_short(data, offset)
     start_of_string = offset + 4  # offset + 2 bytes for int + 2 bytes of padding
     end_of_string = start_of_string + num_chars * 2
     # Characters are defined with 2 bytes using utf-16 little endian encoding, so multiple by 2 to get the number
@@ -197,13 +197,13 @@ def parse_string(data: bytes, position: int, keyname: str) -> tuple[str, int]:
 
 
 def parse_integer(data: bytes, position: int, _: str) -> tuple[int, int]:
-    i = read_int(data, position + 2)  # Skip 2 null padding bytes
+    i = read_short(data, position + 2)  # Skip 2 null padding bytes
     position = position + 6  # Skip 2 for the int and 4 null padding bytes
     return i, position
 
 
 def parse_int16(data: bytes, position: int, _: str) -> tuple[int, int]:
-    i = read_int(data, position + 2)  # Skip 2 null padding bytes
+    i = read_short(data, position + 2)  # Skip 2 null padding bytes
     position = position + 4  # Skip 2 for the int and 2 null padding bytes
     return i, position
 
@@ -237,13 +237,13 @@ def parse_profile_keys(root_node: Node, data: bytes) -> dict[str, PROFILE_KEY_VA
     st_node = children[0]
     # Skip the token and data length (4) + 6 null padding bytes
     position = st_node.offset + 10
-    num_keys = read_int(data, position)
+    num_keys = read_short(data, position)
     logger.debug(f"{num_keys=}")
     position += 4  # Position + 2 for the num_keys read and skip 2 null padding bytes
     profile_keys: dict[str, PROFILE_KEY_VALUE_TPYES] = {}
     for _ in range(num_keys):
         keyname, next_position = read_string(data, position)
-        keytype = KeyType(read_int(data, next_position))
+        keytype = KeyType(read_short(data, next_position))
         logger.debug(f"{keyname=}, {keytype=}, {position=}, {next_position=}")
         position = next_position + 2  # Skip the keytype and 2 null padding bytes
         parse_func = KETYPE_PARSE_MAP.get(keytype)
