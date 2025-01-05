@@ -9,6 +9,7 @@ from restoration.parser import (
     DATA_OFFSET,
     Node,
     decompressl33t,
+    find_two_letter_seq,
     read_bool,
     read_build_string,
     read_int,
@@ -175,3 +176,38 @@ def test_read_build_string_multiple_fh_nodes():
 
     # Assertions
     assert result == "Hi"
+
+
+def test_find_two_letter_seq():
+    # Basic test case
+    data = b"xxYZabc"
+    assert find_two_letter_seq(data) == 2
+
+    # Test with offset
+    assert find_two_letter_seq(data, offset=1) == 2
+
+    # Test with upper_bound
+    assert find_two_letter_seq(data, upper_bound=-1) == -1
+
+    # Test when no uppercase sequence exists
+    data = b"xxxxabc"
+    assert find_two_letter_seq(data) == -1
+
+    # Test when sequence is near the end
+    data = b"abcdEF"
+    assert find_two_letter_seq(data) == 4
+
+    # Test when sequence is exactly at the boundary
+    data = b"XxYzEF"
+    assert find_two_letter_seq(data, offset=3, upper_bound=6) == 4
+
+    # Test exceeding MAX_SCAN_LENGTH
+    long_data = b"x" * 51 + b"AB"
+    assert find_two_letter_seq(long_data) == -1
+
+    # Edge case: empty data
+    assert find_two_letter_seq(b"") == -1
+
+    # Edge case: data smaller than required size
+    assert find_two_letter_seq(b"A") == -1
+    assert find_two_letter_seq(b"AB", offset=1) == -1

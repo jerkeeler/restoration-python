@@ -166,6 +166,12 @@ def find_two_letter_seq(
     Searches for the sequence b"<Uppercase ASCII><Uppercase ASCII>". Moves the reads to offset before
     searching and moves it back to offset once done searching.
     """
+    if upper_bound is None:
+        upper_bound = len(data)
+
+    if not data or upper_bound - offset < 2:
+        return -1
+
     position = offset
     byte1 = data[position]
     byte2 = data[position + 1]
@@ -183,6 +189,9 @@ def find_two_letter_seq(
             return position
 
         position += 1
+
+        if position + 1 > len(data) - 1:
+            break
         byte1 = byte2
         byte2 = data[position + 1]
 

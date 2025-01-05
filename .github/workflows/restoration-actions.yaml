@@ -17,4 +17,4 @@ jobs:
       - name: Run linting checks
         run: ./bin/lint.sh
       - name: Run tests
-        run: pytest tests/
+        run: pytest --cov=restoration tests/
