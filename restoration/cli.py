@@ -35,12 +35,12 @@ def cli(filepath: str, is_gzip: bool, verbose: bool, output: str, quiet: bool) -
     with o(filepath, "rb") as file:
         replay = parse_rec(file)
     if not quiet:
-        json_str = json.dumps(replay.to_dict(), indent=4)
+        json_str = replay.to_json()
         click.echo(json_str)
     if output:
         replay_dict = replay.to_dict()
         with open(output, "w") as f:
-            json.dump(replay_dict, f, indent=4)
+            f.write(replay.to_json())
 
 
 if __name__ == "__main__":

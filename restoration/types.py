@@ -18,6 +18,9 @@ class Replay:
     def to_dict(self) -> dict:
         return {"build_string": self.build_string, "profile_keys": self.profile_keys}
 
+    def to_json(self) -> str:
+        return json.dumps(self.to_dict(), indent=4)
+
 
 @dataclass
 class Node:
