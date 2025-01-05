@@ -7,9 +7,7 @@ import pytest
 from restoration.parser import (
     decompressl33t,
     find_two_letter_seq,
-    read_bool,
     read_build_string,
-    read_int,
     read_string,
 )
 from restoration.types import Node
