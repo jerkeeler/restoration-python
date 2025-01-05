@@ -1,13 +1,11 @@
 import io
 import struct
 import zlib
-from unittest.mock import MagicMock
 
 import pytest
 
+from restoration.consts import DATA_OFFSET
 from restoration.parser import (
-    DATA_OFFSET,
-    Node,
     decompressl33t,
     find_two_letter_seq,
     read_bool,
@@ -15,6 +13,7 @@ from restoration.parser import (
     read_int,
     read_string,
 )
+from restoration.types import Node
 from restoration.xceptions import NodeNotFound
 
 
