@@ -10,7 +10,9 @@ from restoration.consts import (
     OUTER_HIERARCHY_START_OFFSET,
     UPPERCASE_ASCII,
 )
+from restoration.game_commands import parse_command_list
 from restoration.types import PROFILE_KEY_VALUE_TPYES, KeyType, Node, Replay
+from restoration.utils import read_bool, read_int
 from restoration.xceptions import NodeNotFound
 
 logger = logging.getLogger(__name__)
@@ -50,22 +52,15 @@ def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> Replay:
     root_node.print()
     build_string = read_build_string(root_node, decompressed_data)
     profile_keys = parse_profile_keys(root_node, decompressed_data)
+    command_list = parse_command_list(decompressed_data, root_node.end_offset)
 
     return Replay(
         data=decompressed_data,
         header_root_node=root_node,
         build_string=build_string,
-        game_commands=[],
+        game_commands=command_list,
         profile_keys=profile_keys,
     )
-
-
-def read_int(data: bytes, offset: int) -> int:
-    return struct.unpack("<H", data[offset : offset + 2])[0]
-
-
-def read_bool(data: bytes, offset: int) -> bool:
-    return struct.unpack("<?", data[offset : offset + 1])[0]
 
 
 def recursive_create_tree(
