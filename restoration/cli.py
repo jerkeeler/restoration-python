@@ -1,4 +1,5 @@
 import gzip
+import json
 import logging
 
 import click
@@ -14,22 +15,32 @@ from restoration.parser import parse_rec
     help="Decompress the file using gzip before processing",
 )
 @click.option(
+    "-v",
     "--verbose",
     is_flag=True,
     help="Enable verbose logging",
 )
-def cli(filepath: str, is_gzip: bool, verbose: bool) -> None:
+@click.option("-o", "--output", type=click.Path(writable=True), help="Save the output as a json file")
+@click.option("-q", "--quiet", is_flag=True, help="Don't show the output")
+def cli(filepath: str, is_gzip: bool, verbose: bool, output: str, quiet: bool) -> None:
     if verbose:
         click.echo("Verbose logging enabled")
-    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
+    if verbose:
+        logging.basicConfig(level=logging.DEBUG)
 
     # Ignoring types because we are purposefully overloading this variable to make the code nicer
     o = open  # type: ignore
     if is_gzip:
         o = gzip.open  # type: ignore
     with o(filepath, "rb") as file:
-        parse_rec(file)
-    click.echo("Rec parsed!")
+        replay = parse_rec(file)
+    if not quiet:
+        json_str = json.dumps(replay.to_dict(), indent=4)
+        click.echo(json_str)
+    if output:
+        replay_dict = replay.to_dict()
+        with open(output, "w") as f:
+            json.dump(replay_dict, f, indent=4)
 
 
 if __name__ == "__main__":

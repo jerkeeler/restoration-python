@@ -1,12 +1,9 @@
 import gzip
 import io
 import logging
-import string
 import struct
 import zlib
-from dataclasses import dataclass, field
-from functools import cached_property
-from typing import Any, Callable
+from typing import Callable
 
 from restoration.consts import (
     MAX_SCAN_LENGTH,
@@ -14,7 +11,7 @@ from restoration.consts import (
     UPPERCASE_ASSCII,
 )
 from restoration.enums import KeyType
-from restoration.types import PROFILE_KEY_VALUE_TPYES, Node
+from restoration.types import PROFILE_KEY_VALUE_TPYES, Node, Replay
 from restoration.xceptions import NodeNotFound
 
 logger = logging.getLogger(__name__)
@@ -33,7 +30,7 @@ def decompressl33t(stream: io.BufferedReader | gzip.GzipFile) -> bytes:
     return decompress.decompress(stream.read())
 
 
-def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> tuple[bytes, Node]:
+def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> Replay:
     decompressed_data = decompressl33t(stream)
     position = OUTER_HIERARCHY_START_OFFSET
     two_letter_code = decompressed_data[position : position + 2].decode("utf-8")
@@ -52,9 +49,16 @@ def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> tuple[bytes, Node]:
     logger.debug(data_len)
     recursive_create_tree(root_node, decompressed_data)
     root_node.print()
-    read_build_string(root_node, decompressed_data)
-    parse_profile_keys(root_node, decompressed_data)
-    return decompressed_data, root_node
+    build_string = read_build_string(root_node, decompressed_data)
+    profile_keys = parse_profile_keys(root_node, decompressed_data)
+
+    return Replay(
+        data=decompressed_data,
+        header_root_node=root_node,
+        build_string=build_string,
+        game_commands=[],
+        profile_keys=profile_keys,
+    )
 
 
 def read_int(data: bytes, offset: int) -> int:
@@ -230,7 +234,7 @@ KETYPE_PARSE_MAP: dict[KeyType, Callable[[bytes, int, str], tuple[PROFILE_KEY_VA
 }
 
 
-def parse_profile_keys(root_node: Node, data: bytes) -> None:
+def parse_profile_keys(root_node: Node, data: bytes) -> dict[str, PROFILE_KEY_VALUE_TPYES]:
     children = root_node.get_children(["MP", "ST"])
     if not children:
         raise NodeNotFound("Could not find ST node! No profile keys!")
@@ -253,3 +257,4 @@ def parse_profile_keys(root_node: Node, data: bytes) -> None:
             raise ValueError(f"No parser for keytype: {keytype}")
         keydata, position = parse_func(data, position, keyname)
         profile_keys[keyname] = keydata
+    return profile_keys

@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass, field
 from functools import cached_property
 
@@ -11,7 +12,11 @@ class Replay:
     data: bytes
     header_root_node: "Node"
     game_commands: list
+    build_string: str
     profile_keys: dict[str, PROFILE_KEY_VALUE_TPYES]
+
+    def to_dict(self) -> dict:
+        return {"build_string": self.build_string, "profile_keys": self.profile_keys}
 
 
 @dataclass
