@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass, field
+from enum import Enum
 from functools import cached_property
 
 from restoration.consts import DATA_OFFSET
@@ -76,3 +77,12 @@ class Node:
         print(self)
         for child in self.children:
             child.print()
+
+
+class KeyType(Enum):
+    uint32 = 1
+    int32 = 2
+    gamesyncstate = 3
+    int16 = 4
+    boolean = 6
+    string = 10

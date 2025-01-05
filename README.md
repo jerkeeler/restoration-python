@@ -14,7 +14,7 @@ Heavily inspired by [loggy's work](https://github.com/erin-fitzpatric/next-aom-g
 
 ## Development setup
 
-Clone the respository, create a new virtual environment, install the package and its dependencies:
+Clone the respository, create a new Python 3.11.10+ virtual environment, install the package and its dependencies:
 
 ```bash
 # Install the package and its dev dependencies

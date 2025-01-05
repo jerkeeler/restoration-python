@@ -8,10 +8,9 @@ from typing import Callable
 from restoration.consts import (
     MAX_SCAN_LENGTH,
     OUTER_HIERARCHY_START_OFFSET,
-    UPPERCASE_ASSCII,
+    UPPERCASE_ASCII,
 )
-from restoration.enums import KeyType
-from restoration.types import PROFILE_KEY_VALUE_TPYES, Node, Replay
+from restoration.types import PROFILE_KEY_VALUE_TPYES, KeyType, Node, Replay
 from restoration.xceptions import NodeNotFound
 
 logger = logging.getLogger(__name__)
@@ -134,7 +133,7 @@ def find_two_letter_seq(
         # a byte string with two bytes like b'AB', it will be treated as a byte string.
         # It's very annoying. So you could change this to read a new character one at
         # a time, it would be more efficient, but I'm not annoyed to figure it out.
-        if byte1 in UPPERCASE_ASSCII and byte2 in UPPERCASE_ASSCII:
+        if byte1 in UPPERCASE_ASCII and byte2 in UPPERCASE_ASCII:
             return position
 
         position += 1
