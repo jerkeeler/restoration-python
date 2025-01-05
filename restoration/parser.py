@@ -268,7 +268,7 @@ def parse_boolean(data: bytes, position: int, keyname: str) -> tuple[bool, int]:
 
 
 def parse_gamesyncstate(data: bytes, position: int, keyname: str) -> tuple[None, int]:
-    return None, position + 16
+    return None, position + 10
 
 
 KETYPE_PARSE_MAP: dict[KeyType, Callable[[bytes, int, str], tuple[Any, int]]] = {
