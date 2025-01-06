@@ -6,13 +6,14 @@ import zlib
 from typing import Callable
 
 from restoration.consts import (
+    ASCII,
     MAX_SCAN_LENGTH,
     OUTER_HIERARCHY_START_OFFSET,
     UPPERCASE_ASCII,
 )
 from restoration.game_commands import parse_command_list
 from restoration.types import PROFILE_KEY_VALUE_TPYES, KeyType, Node, Replay
-from restoration.utils import read_bool, read_short, read_string
+from restoration.utils import read_bool, read_int32, read_string, read_uint32
 from restoration.xceptions import NodeNotFound
 
 logger = logging.getLogger(__name__)
@@ -34,10 +35,10 @@ def decompressl33t(stream: io.BufferedReader | gzip.GzipFile) -> bytes:
 def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> Replay:
     decompressed_data = decompressl33t(stream)
     offset = OUTER_HIERARCHY_START_OFFSET
-    two_letter_code = decompressed_data[offset : offset + 2].decode("utf-8")
+    two_letter_code = decompressed_data[offset : offset + 2].decode("ascii")
     offset += 2
-    data_len = read_short(decompressed_data, offset)
-    offset += 2
+    data_len = read_uint32(decompressed_data, offset)
+    offset += 4
 
     # 6 bytes of padding for no reason? Don't think this is needed
     # decompressed_data.read(DATA_OFFSET)
@@ -49,7 +50,7 @@ def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> Replay:
     # end_offset = OUTER_HIERARCHY_START_OFFSET + 6 + data_len
     # logger.debug(f"{end_offset=} {root_node.end_offset=}")
     logger.debug(two_letter_code)
-    logger.debug(data_len)
+    logger.debug(f"{ data_len=}")
     recursive_create_tree(root_node, decompressed_data)
     root_node.print()
     build_string = read_build_string(root_node, decompressed_data)
@@ -63,6 +64,17 @@ def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> Replay:
         game_commands=command_list,
         profile_keys=profile_keys,
     )
+
+
+has_substructure_given_parent = {
+    "BG": None,
+    "J1": None,
+    "PL": "J1",
+    "BP": "PL",
+    "MP": None,
+    "GM": None,
+    "GD": "GM",
+}
 
 
 def recursive_create_tree(
@@ -84,10 +96,10 @@ def recursive_create_tree(
             break
 
         position = next_node_loc
-        token = decompressed_data[position : position + 2].decode("utf-8")
+        token = decompressed_data[position : position + 2].decode("ascii")
         position += 2
-        size = read_short(decompressed_data, position)
-        position += 2
+        size = read_uint32(decompressed_data, position)
+        position += 4
 
         node = Node(
             token=token,
@@ -99,7 +111,8 @@ def recursive_create_tree(
         position = node.end_offset
 
     for child in parent_node.children:
-        recursive_create_tree(child, decompressed_data)
+        if child.token in has_substructure_given_parent:
+            recursive_create_tree(child, decompressed_data)
 
 
 def find_two_letter_seq(
@@ -114,7 +127,7 @@ def find_two_letter_seq(
     if upper_bound is None:
         upper_bound = len(data)
 
-    if not data or upper_bound - offset < 2:
+    if not data or upper_bound - offset < 2 or offset >= len(data):
         return -1
 
     position = offset
@@ -130,7 +143,7 @@ def find_two_letter_seq(
         # a byte string with two bytes like b'AB', it will be treated as a byte string.
         # It's very annoying. So you could change this to read a new character one at
         # a time, it would be more efficient, but I'm not annoyed to figure it out.
-        if byte1 in UPPERCASE_ASCII and byte2 in UPPERCASE_ASCII:
+        if byte1 in ASCII and byte2 in ASCII:
             return position
 
         position += 1
@@ -143,7 +156,7 @@ def find_two_letter_seq(
         if position > offset + MAX_SCAN_LENGTH:
             # If we don't find a two letter sequence within 50 bytes, then we're probably in a pad position and should
             # exit out
-            logger.warning(f"Could not find a two letter sequence at {offset=}")
+            # logger.warning(f"Could not find a two letter sequence at {offset=}")
             break
 
     return -1
@@ -179,13 +192,13 @@ def parse_string(data: bytes, position: int, keyname: str) -> tuple[str, int]:
 
 
 def parse_integer(data: bytes, position: int, _: str) -> tuple[int, int]:
-    i = read_short(data, position + 2)  # Skip 2 null padding bytes
+    i = read_int32(data, position + 2)  # Skip 2 null padding bytes
     position = position + 6  # Skip 2 for the int and 4 null padding bytes
     return i, position
 
 
 def parse_int16(data: bytes, position: int, _: str) -> tuple[int, int]:
-    i = read_short(data, position + 2)  # Skip 2 null padding bytes
+    i = read_int32(data, position + 2)  # Skip 2 null padding bytes
     position = position + 4  # Skip 2 for the int and 2 null padding bytes
     return i, position
 
@@ -219,13 +232,13 @@ def parse_profile_keys(root_node: Node, data: bytes) -> dict[str, PROFILE_KEY_VA
     st_node = children[0]
     # Skip the token and data length (4) + 6 null padding bytes
     position = st_node.offset + 10
-    num_keys = read_short(data, position)
+    num_keys = read_int32(data, position)
     logger.debug(f"{num_keys=}")
     position += 4  # Position + 2 for the num_keys read and skip 2 null padding bytes
     profile_keys: dict[str, PROFILE_KEY_VALUE_TPYES] = {}
     for _ in range(num_keys):
         keyname, next_position = read_string(data, position)
-        keytype = KeyType(read_short(data, next_position))
+        keytype = KeyType(read_int32(data, next_position))
         logger.debug(f"{keyname=}, {keytype=}, {position=}, {next_position=}")
         position = next_position + 2  # Skip the keytype and 2 null padding bytes
         parse_func = KETYPE_PARSE_MAP.get(keytype)

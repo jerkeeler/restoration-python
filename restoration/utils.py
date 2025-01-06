@@ -5,6 +5,10 @@ def read_int32(data: bytes, offset: int) -> int:
     return struct.unpack("<i", data[offset : offset + 4])[0]
 
 
+def read_uint32(data: bytes, offset: int) -> int:
+    return struct.unpack("<I", data[offset : offset + 4])[0]
+
+
 def read_short(data: bytes, offset: int) -> int:
     return struct.unpack("<H", data[offset : offset + 2])[0]
 
