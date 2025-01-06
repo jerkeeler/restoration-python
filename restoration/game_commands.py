@@ -78,7 +78,7 @@ REFINERS: dict[int, list[Callable[[], int]]] = {
         unpack_int32,
         unpack_int8,
     ],
-    13: [unpack_int32, unpack_int32, unpack_int32, unpack_float],
+    13: [unpack_int32, unpack_int32, unpack_int32, unpack_int32, unpack_float],
     14: [unpack_int32, unpack_int32],
     18: [unpack_int32, unpack_int32, unpack_int32],
     19: [unpack_int32, unpack_int32, unpack_int32, unpack_int32, unpack_float, unpack_float, unpack_int8],
@@ -113,7 +113,7 @@ REFINERS: dict[int, list[Callable[[], int]]] = {
     68: [unpack_int32, unpack_int32, unpack_vector, unpack_vector],
     69: [unpack_int32, unpack_int32, unpack_int32, unpack_vector, unpack_vector],
     71: [unpack_int32, unpack_int32],
-    72: [unpack_int8, unpack_int32, unpack_int32, unpack_int8],
+    72: [unpack_int8, unpack_int32, unpack_int32, unpack_int8, unpack_int8, unpack_int8],
     75: [unpack_int32, unpack_int32, unpack_int32, unpack_int32],
 }
 
@@ -142,7 +142,6 @@ def parse_command_list(data: bytes, header_end_offset: int) -> list[CommandList]
 
 
 def parse_footer(data: bytes, offset: int) -> int:
-    logger.debug(f"footer start {offset=}")
     early = data[offset : offset + 10]
     extra_byte_count = data[offset]
     offset += 1
@@ -157,7 +156,6 @@ def parse_footer(data: bytes, offset: int) -> int:
 
     offset += 9
     one_fourth_footer_length = read_short(data, offset)
-    logger.debug(f"{one_fourth_footer_length=}")
     offset += 4
     end_offset = offset + 4 * one_fourth_footer_length
     late = data[offset:end_offset]
@@ -223,6 +221,8 @@ def parse_item(data: bytes, offset: int) -> CommandList:
     entry_index = read_uint32(data, offset)
     offset += 4
     finalByte = data[offset]
+    if finalByte != 0:
+        raise Exception("Final byte does not equal 0")
     offset += 1
 
     return CommandList(offset_end=offset, commands=commands)
