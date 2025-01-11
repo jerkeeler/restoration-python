@@ -1,6 +1,8 @@
 # Restoration
 
-# **UNDER ACTIVE DEVELOPMENT** - This project is currently under active development and is not yet ready for use.
+# **DEPRECATED** - This project is not actively developed and should not be used.
+
+## Replacement CLI has been in written in go over at [github.com/jerkeeler/restoration](https://github.com/jerkeeler/restoration)
 
 [![PyPI version](https://badge.fury.io/py/restoration.svg)](https://badge.fury.io/py/restoration)
 
