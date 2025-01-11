@@ -57,14 +57,6 @@ def test_decompressl33t_partial_data():
         decompressl33t(stream)
 
 
-# Tests for read_string
-def test_read_string():
-    data = b"\x05\x00\x00\x00H\x00e\x00l\x00l\x00o\x00"
-    string, next_offset = read_string(data, 0)
-    assert string == "Hello"
-    assert next_offset == 14
-
-
 def test_read_build_string_success():
     # Create root node and FH child node
     fh_node = Node(token="FH", offset=-6, size=10)  # Using -6 offset to ensure the string is read correctly

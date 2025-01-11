@@ -54,8 +54,10 @@ def parse_rec(stream: io.BufferedReader | gzip.GzipFile) -> Replay:
     recursive_create_tree(root_node, decompressed_data)
     root_node.print()
     build_string = read_build_string(root_node, decompressed_data)
-    profile_keys = parse_profile_keys(root_node, decompressed_data)
+    # profile_keys = parse_profile_keys(root_node, decompressed_data)
     command_list = parse_command_list(decompressed_data, root_node.end_offset)
+    profile_keys = {}
+    command_list = []
 
     return Replay(
         data=decompressed_data,

@@ -129,6 +129,7 @@ def parse_command_list(data: bytes, header_end_offset: int) -> list[CommandList]
     offset = first_foot_end + 5
     last_index = 1
     command_list: list[CommandList] = []
+    print(111111, first_foot_end)
 
     while True:
         if offset == len(data) - 1:
